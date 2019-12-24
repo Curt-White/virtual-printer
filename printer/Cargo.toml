@@ -1,0 +1,12 @@
+[package]
+name = "printer"
+version = "0.1.0"
+authors = ["Curtis White <curtiswhite@uvic.ca>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+parse_macro = {path = "../parse_macro"}
+maplit = "1.0.2"
+log = "*"

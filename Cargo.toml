@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "printer",
+	"parse_macro"
+]
