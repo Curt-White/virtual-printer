@@ -12,7 +12,12 @@ pub enum Justification {
 pub struct Printer {
     text_buffer:   Vec<u8>,
     image_buffer:  Vec<u8>,
+    // Formatting Modes
     justification: Justification,
+    bold: bool,
+    double_height: bool,
+    double_width: bool,
+    underline: bool,
 }
 
 impl Printer {

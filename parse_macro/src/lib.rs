@@ -50,11 +50,17 @@ fn create_token(tokens: &Vec<TokenTree>) -> Token {
                 } else {
                     panic!("The literal '{}' is not an integer", lit.to_string());
                 }
-            }
+            },
             TokenTree::Punct(punct) => Token::Operation(TokenType {
                 value: punct.to_string(),
                 stream: TokenStream::from(TokenTree::from(punct)),
             }),
+            TokenTree::Group(group) => {
+                Token::Operation(TokenType {
+                    value: group.to_string(),
+                    stream: TokenStream::from(TokenTree::from(group)),
+                })
+            },
             _ => panic!(
                 "{} is not a Valid Identifier or Literal",
                 tokens[0].to_string()
@@ -125,11 +131,11 @@ fn fn_content(
         let tok = tokens[idx].get_stream();
         let parsed = quote::__rt::TokenStream::from(tok);
         let ty_string = quote!(#ty).to_string();
-
         let data;
+
         if ty_string.contains("Vec") {
             data = quote! {
-                let #ident = bytes.drain(..((#parsed) as usize)).collect();
+                let #ident = bytes.drain(..(((#parsed) as u32) as usize)).collect();
             };
         } else {
             data = quote! {
@@ -175,6 +181,7 @@ pub fn gen_lex(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let content = fn_content(name, idents, types, value);
 
     let expanded = quote! {
+        #[derive(Debug)]
         #input
 
         fn #func_ident (bytes: &mut Vec<u8>) -> Result<#name, std::io::Error> {
