@@ -1,4 +1,3 @@
-use std::string::ParseError;
 use std::error::Error;
 
 // Specific codes for errors which occur in printing/parsing
@@ -9,6 +8,7 @@ pub enum Code {
     InvalidCommand = 23,
     InsufficientBytes = 24,
     InvalidFunction = 25,
+    BadPartialCommand = 26,
 
     UnknownError = 100,
     ParseMacroError = 101

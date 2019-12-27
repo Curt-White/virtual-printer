@@ -1,17 +1,15 @@
-use crate::esc_pos::{ print_position, misc, bit_image, character };
+use crate::esc_pos::{ print_position, misc, bit_image, character, tlc };
 use crate::error::{PrinterError, Code};
+use crate::command::{PrinterFunc};
 
 // Query result for query of the commands
 type IntermediateResult = Result<Query, PrinterError>;
-
-// A function which executes the specified operation on the printer
-pub type Command = fn(bytes: &mut Vec<u8>) -> Result<(), PrinterError>;
-pub type QueryResult = Result<Command, PrinterError>;
+pub type QueryResult = Result<PrinterFunc, PrinterError>;
 
 // Result of a command query
 enum Query {
     SubQuery(fn(byte: u8) -> IntermediateResult),
-    Resource(Command),
+    Resource(PrinterFunc),
 }
 
 // Top level commands and groupings
@@ -28,6 +26,7 @@ fn top_level_command(byte: u8) -> IntermediateResult {
     Ok(match byte {
         0x1B => Query::SubQuery(esc_commands),
         0x1D => Query::SubQuery(gs_commands),
+        0x0A => Query::Resource(tlc::line_feed),
         _ => return Err(PrinterError{
             code: Code::InvalidCommand,
             message: String::from(format!("Invalid Top Level Command At Token: 0x{:X}", byte)),
@@ -42,7 +41,7 @@ fn esc_commands(byte: u8) -> IntermediateResult {
         0x40 => Query::Resource(misc::init_printer),
         0x61 => Query::Resource(print_position::set_justification),
         _ => return Err(PrinterError{
-            code: Code::InvalidCommand,
+            code: Code::BadPartialCommand,
             message: String::from("Invalid ESC Group Command"),
         })
     })
@@ -50,17 +49,10 @@ fn esc_commands(byte: u8) -> IntermediateResult {
 
 fn gs_commands(byte: u8) -> IntermediateResult {
     Ok(match byte {
-        // pop off the redundant 4C after command which provides no further de-multiplexing
-        0x28 => Query::Resource(|bytes: &mut Vec<u8>| {
-            bytes.drain(0..1);
-            bit_image::command_2_arg(bytes)
-        }),
-        0x38 => Query::Resource(|bytes: &mut Vec<u8>| {
-            bytes.pop();
-            bit_image::command_4_arg(bytes)
-        }),
+        0x28 => Query::SubQuery(|byte: u8| Ok(Query::Resource(bit_image::command_2_arg))),
+        0x38 => Query::SubQuery(|byte: u8| Ok(Query::Resource(bit_image::command_4_arg))),
         _ => return Err(PrinterError{
-            code: Code::InvalidCommand,
+            code: Code::BadPartialCommand,
             message: String::from("Invalid GS Group Command"),
         })
     })
@@ -99,7 +91,6 @@ fn resolve_query(bytes: &mut Vec<u8>) -> QueryResult {
 // Query a command and return a possible command function or error based on the
 // sequence of bytes provided, the bytes that are matched are removed
 pub fn query_command(bytes: &mut Vec<u8>)-> QueryResult {
-    println!("{:x}", bytes[0]);
     if bytes.len() == 0 {
         return Err (
             PrinterError {
@@ -109,5 +100,6 @@ pub fn query_command(bytes: &mut Vec<u8>)-> QueryResult {
         );
     }
 
+    println!("Next Byte {:X}", bytes[0]);
     return resolve_query(bytes);
 }
