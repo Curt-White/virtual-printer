@@ -4,6 +4,7 @@ mod esc_pos;
 mod error;
 mod printer;
 mod content;
+mod formatter;
 mod command;
 
 use esc_pos::tree::query_command;
@@ -19,6 +20,11 @@ fn main() {
         let a = query_command(&mut contents);
         match a {
             Ok(val) => {
+                if text.len() > 0 {
+                    printer.buffer_text(&mut text);
+                    text.drain(..);
+                }
+
                 let a = val(&mut printer, &mut contents);
                 println!("{:?}", a);
             },

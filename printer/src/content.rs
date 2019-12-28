@@ -18,14 +18,14 @@ impl Image {
 
 pub struct TextFormat {
     pub bold: bool,
-    pub double_height: bool,
-    pub double_width: bool,
+    pub height_mag: u8,
+    pub width_mag: u8,
     pub underline: bool,
 }
 
 pub struct Text {
-    format: TextFormat,
-    data: String,
+    pub format: TextFormat,
+    pub data: String,
 }
 
 impl Text {
