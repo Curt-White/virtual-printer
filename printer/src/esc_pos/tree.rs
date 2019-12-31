@@ -1,4 +1,4 @@
-use crate::esc_pos::{ print_position, misc, bit_image, character, tlc };
+use crate::esc_pos::{ print_position, misc, bit_image, character, print };
 use crate::error::{PrinterError, Code};
 use crate::command::{PrinterFunc};
 
@@ -26,7 +26,7 @@ fn top_level_command(byte: u8) -> IntermediateResult {
     Ok(match byte {
         0x1B => Query::SubQuery(esc_commands),
         0x1D => Query::SubQuery(gs_commands),
-        0x0A => Query::Resource(tlc::line_feed),
+        0x0A => Query::Resource(print::line_feed),
         _ => return Err(PrinterError{
             code: Code::InvalidCommand,
             message: String::from(format!("Invalid Top Level Command At Token: 0x{:X}", byte)),
@@ -39,10 +39,12 @@ fn esc_commands(byte: u8) -> IntermediateResult {
     Ok(match byte {
         0x21 => Query::Resource(character::set_printer_mode),
         0x40 => Query::Resource(misc::init_printer),
+        0x45 => Query::Resource(character::set_emphasis_mode),
         0x61 => Query::Resource(print_position::set_justification),
+        0x64 => Query::Resource(print::print_and_feed),
         _ => return Err(PrinterError{
             code: Code::BadPartialCommand,
-            message: String::from("Invalid ESC Group Command"),
+            message: String::from(format!("Invalid ESC Group Command, Failed on Byte {:X}", byte)),
         })
     })
 }
@@ -53,7 +55,7 @@ fn gs_commands(byte: u8) -> IntermediateResult {
         0x38 => Query::SubQuery(|byte: u8| Ok(Query::Resource(bit_image::command_4_arg))),
         _ => return Err(PrinterError{
             code: Code::BadPartialCommand,
-            message: String::from("Invalid GS Group Command"),
+            message: String::from(format!("Invalid GS Group Command, Failed on Byte {:X}", byte)),
         })
     })
 }
@@ -67,7 +69,8 @@ fn resolve_query(bytes: &mut Vec<u8>) -> QueryResult {
     loop {
         match query_result {
             Query::Resource(res) => {
-                bytes.drain(0..pieces + 1);
+                let dat = bytes.drain(0..pieces + 1);
+                println!("{:X?}", dat);
                 return Ok(res);
             },
             Query::SubQuery(query) =>{
@@ -100,6 +103,5 @@ pub fn query_command(bytes: &mut Vec<u8>)-> QueryResult {
         );
     }
 
-    println!("Next Byte {:X}", bytes[0]);
     return resolve_query(bytes);
 }

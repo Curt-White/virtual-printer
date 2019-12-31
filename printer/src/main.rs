@@ -9,6 +9,8 @@ mod command;
 
 use esc_pos::tree::query_command;
 use crate::printer::Printer;
+use std::fs::File;
+use std::io::Write;
 
 fn main() {
     let mut contents = fs::read("/Users/curtwhite/Desktop/Projects/virtual-printer/receipt-with-logo.bin")
@@ -25,8 +27,7 @@ fn main() {
                     text.drain(..);
                 }
 
-                let a = val(&mut printer, &mut contents);
-                println!("{:?}", a);
+                val(&mut printer, &mut contents);
             },
             Err(e) => match e.code {
                 error::Code::InvalidCommand => {
@@ -35,9 +36,11 @@ fn main() {
                     } else {
                         return;
                     }
-                    println!("{:?}", text);
                 },
                 _ => {
+                    let data = printer.close_document();
+                    let mut file = File::create("./test.html").expect("File Failed");
+                    file.write_all(data.as_bytes());
                     println!("An Error Occurred: {:?}, Code: {:?}", e.message, e.code);
                     return;
                 }

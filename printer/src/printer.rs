@@ -9,6 +9,7 @@ pub enum Mode {
     Standard
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Justification {
     Left,
     Center,
@@ -43,6 +44,7 @@ impl Printer {
     /// Add the provided text to the printers printing buffed
     pub fn buffer_text(&mut self, text: &mut Vec<u8>) -> Option<Utf8Error>  {
         let format = TextFormat {
+            justification: self.justification,
             bold: self.bold,
             height_mag: self.height_mag,
             width_mag: self.width_mag,
@@ -56,13 +58,15 @@ impl Printer {
         }
     }
 
+    pub fn set_justification(&mut self, opt: Justification) { self.justification = opt; }
+    pub fn set_underline_mode(&mut self, on: bool) { self.underline = on }
+    pub fn set_bold_mode(&mut self, on: bool) { self.bold = on; }
+    pub fn set_width_mag(&mut self, scale: u8) { self.width_mag = scale }
+    pub fn set_height_mag(&mut self, scale: u8) { self.height_mag = scale }
+
     /// Add the image to the image buffer
     pub fn buffer_image(&mut self, image: Image) {
         self.image_buffer.push(image);
-    }
-
-    pub fn set_justification(&mut self, opt: Justification) {
-        self.justification = opt;
     }
 
     pub fn feed_line(&mut self) {
@@ -70,6 +74,12 @@ impl Printer {
         for item in texts {
             self.formatter.format_text(item);
         }
+
+        self.formatter.new_line();
+    }
+
+    pub fn close_document(&mut self) -> String {
+        self.formatter.close()
     }
 
     pub fn print_image(&mut self) -> Result<(), PrinterError> {

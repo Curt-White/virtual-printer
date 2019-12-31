@@ -1,4 +1,5 @@
 use std::str::{from_utf8, Utf8Error};
+use crate::printer::Justification;
 
 pub struct Image {
     width: u16,
@@ -16,7 +17,9 @@ impl Image {
     }
 }
 
+#[derive(Debug)]
 pub struct TextFormat {
+    pub justification: Justification,
     pub bold: bool,
     pub height_mag: u8,
     pub width_mag: u8,
