@@ -1,5 +1,5 @@
 use std::str::{from_utf8, Utf8Error};
-use crate::printer::Justification;
+use crate::printer::{Justification, Underline};
 
 pub struct Image {
     width: u16,
@@ -23,25 +23,24 @@ pub struct TextFormat {
     pub bold: bool,
     pub height_mag: u8,
     pub width_mag: u8,
-    pub underline: bool,
+    pub underline: Underline,
 }
 
 pub struct Text {
     pub format: TextFormat,
-    pub data: String,
+    pub data: Vec<u8>,
 }
 
 impl Text {
     pub fn from(content: Vec<u8>, format: TextFormat) -> Result<Text, Utf8Error> {
         Ok(Text {
             format,
-            data: String::from(from_utf8(content.as_ref())?),
+            data: content
         })
     }
 
     pub fn append(&mut self, data: Vec<u8>) -> Result<(), Utf8Error> {
-        let value = from_utf8(data.as_ref())?;
-        self.data.push_str(value);
+        self.data.extend(data.iter());
         return Ok(());
     }
 }

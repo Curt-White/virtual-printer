@@ -38,6 +38,7 @@ fn top_level_command(byte: u8) -> IntermediateResult {
 fn esc_commands(byte: u8) -> IntermediateResult {
     Ok(match byte {
         0x21 => Query::Resource(character::set_printer_mode),
+        0x2D => Query::Resource(character::set_underline_mode),
         0x40 => Query::Resource(misc::init_printer),
         0x45 => Query::Resource(character::set_emphasis_mode),
         0x61 => Query::Resource(print_position::set_justification),

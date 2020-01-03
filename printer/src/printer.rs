@@ -1,9 +1,11 @@
 use crate::content::{Text, Image, TextFormat};
-use crate::error::PrinterError;
+use crate::error::{PrinterError, Code};
 
 use std::str::Utf8Error;
 use crate::formatter::{HTMLFormatter, Formatter};
+use std::fmt::{Display, Error};
 
+#[derive(PartialEq)]
 pub enum Mode {
     Page,
     Standard
@@ -16,7 +18,25 @@ pub enum Justification {
     Right
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Underline {
+    None = 0,
+    SingleWidth = 1,
+    DoubleWidth = 2
+}
+
+impl Display for Underline {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), Error> {
+        match *self {
+            Underline::None => write!(f, "0"),
+            Underline::SingleWidth => write!(f, "1"),
+            Underline::DoubleWidth => write!(f, "2")
+        }
+    }
+}
+
 pub struct Printer {
+    pub mode: Mode,
     pub formatter: HTMLFormatter,
     pub text_buffer:   Vec<Text>,
     pub image_buffer:  Vec<Image>,
@@ -25,12 +45,15 @@ pub struct Printer {
     pub bold: bool,
     pub height_mag: u8,
     pub width_mag: u8,
+    /// The thickness of underline as multiple of size 0 is none, 1 is 1x, 2 is 2x ...
     pub underline: bool,
+    pub underline_width: Underline,
 }
 
 impl Printer {
     pub fn new() -> Printer {
         Printer {
+            mode: Mode::Standard,
             formatter: HTMLFormatter::new(),
             text_buffer: Vec::new(),
             image_buffer: Vec::new(),
@@ -39,6 +62,7 @@ impl Printer {
             width_mag: 1,
             height_mag: 1,
             underline: false,
+            underline_width: Underline::None,
         }
     }
     /// Add the provided text to the printers printing buffed
@@ -48,7 +72,7 @@ impl Printer {
             bold: self.bold,
             height_mag: self.height_mag,
             width_mag: self.width_mag,
-            underline: self.underline,
+            underline: if self.underline { self.underline_width } else { Underline::None },
         };
 
         let text = Text::from(text.to_owned(), format);
@@ -58,9 +82,26 @@ impl Printer {
         }
     }
 
-    pub fn set_justification(&mut self, opt: Justification) { self.justification = opt; }
-    pub fn set_underline_mode(&mut self, on: bool) { self.underline = on }
-    pub fn set_bold_mode(&mut self, on: bool) { self.bold = on; }
+    /// Set the justification of the printer. The printers justification
+    pub fn set_justification(&mut self, opt: Justification) -> Result<(), PrinterError>  {
+        // Printers cannot set the justification while in page mode
+        if self.mode == Mode::Page {
+            return Err(PrinterError {
+                code: Code::InvalidFunction,
+                message: "Can Not Set Justification in Page Mode".to_string()
+            });
+        }
+
+        self.justification = opt;
+        return Ok(());
+    }
+
+
+    pub fn toggle_underline(&mut self, on: bool) { self.underline = on }
+    pub fn toggle_bold(&mut self, on: bool) { self.bold = on; }
+
+    /// Underline Mode holds
+    pub fn set_underline_mode(&mut self, mode: Underline) { self.underline_width = mode }
     pub fn set_width_mag(&mut self, scale: u8) { self.width_mag = scale }
     pub fn set_height_mag(&mut self, scale: u8) { self.height_mag = scale }
 

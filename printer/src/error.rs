@@ -9,6 +9,7 @@ pub enum Code {
     InsufficientBytes = 24,
     InvalidFunction = 25,
     BadPartialCommand = 26,
+    BadArguments = 27,
 
     UnknownError = 100,
     ParseMacroError = 101

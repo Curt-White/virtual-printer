@@ -13,7 +13,7 @@ use std::fs::File;
 use std::io::Write;
 
 fn main() {
-    let mut contents = fs::read("/Users/curtwhite/Desktop/Projects/virtual-printer/receipt-with-logo.bin")
+    let mut contents = fs::read("/Users/curtwhite/Desktop/Projects/virtual-printer/my_receipt.bin")
         .expect("Something went wrong reading the file");
     let mut printer = Printer::new();
     let mut text: Vec<u8> = Vec::new();
